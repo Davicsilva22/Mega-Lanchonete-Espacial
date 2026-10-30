@@ -1,0 +1,12 @@
+{
+  "name": "mega-lanchonete-espacial",
+  "version": "1.0.0",
+  "description": "Demonstração de uma lanchonete online com frontend e API em Node.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mega Lanchonete Espacial</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="account-menu">
+      <button id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="menu-links">☰ Menu</button>
+      <div id="menu-links" class="menu-links" hidden>
+        <button data-subaba="catalogo">🚀 Catálogo</button>
+        <button data-subaba="perfil">👩‍🚀 Perfil</button>
+        <button data-subaba="configuracoes">⚙️ Configurações</button>
+      </div>
+    </div>
+    <h1>🚀 MEGA LANCHONETE ESPACIAL</h1>
+    <div class="subtitulo">SABORES DE OUTRO MUNDO</div>
+  </header>
+
+  <nav aria-label="Navegação principal">
+    <button data-aba="pedido">🛒 Meu pedido (<span id="quantidade">0</span>)</button>
+    <button data-aba="pagamento">💳 Pagamento</button>
+  </nav>
+
+  <main>
+    <section id="menu" class="aba ativa">
+      <h2>Menu da estação</h2>
+      <p class="descricao">Explore a galáxia de sabores e personalize seu espaço.</p>
+      <section id="catalogo" class="subaba ativa">
+        <h3 class="titulo-secao">Catálogo galáctico</h3>
+        <div class="categorias" role="tablist" aria-label="Categorias do catálogo">
+          <button class="ativo" data-categoria="hamburguer">🍔 Hambúrgueres</button>
+          <button data-categoria="pizza">🍕 Pizzas</button>
+          <button data-categoria="bebidas">🥤 Bebidas</button>
+          <button data-categoria="sobremesas">🍰 Sobremesas</button>
+          <button data-categoria="aperitivos">🪐 Aperitivos</button>
+        </div>
+        <div id="grade-produtos" class="grade"></div>
+      </section>
+      <section id="perfil" class="subaba">
+        <div class="painel painel-conta">
+          <h3>👩‍🚀 Perfil do explorador</h3>
+          <p class="descricao">Seus dados ficam salvos apenas neste navegador.</p>
+          <label class="campo-perfil">Como podemos chamar você?
+            <input id="perfil-nome" type="text" maxlength="40" placeholder="Nome de explorador">
+          </label>
+          <label class="campo-perfil">E-mail (opcional)
+            <input id="perfil-email" type="email" maxlength="100" placeholder="voce@galaxia.com">
+          </label>
+          <button id="salvar-perfil" class="botao">Salvar perfil</button>
+          <p id="perfil-status" class="aviso" aria-live="polite"></p>
+        </div>
+      </section>
+      <section id="configuracoes" class="subaba">
+        <div class="painel painel-conta">
+          <h3>⚙️ Preferências de bordo</h3>
+          <label class="config-opcao"><input id="config-descricoes" type="checkbox"> Deixar as descrições dos produtos sempre visíveis</label>
+          <label class="config-opcao"><input id="config-animacoes" type="checkbox"> Reduzir animações do site</label>
+          <p class="aviso">As preferências são guardadas neste navegador.</p>
+        </div>
+      </section>
+    </section>
+
+    <section id="pedido" class="aba">
+      <h2>Seu pedido</h2>
+      <p class="descricao">Use os botões para remover itens ou limpar o pedido.</p>
+      <div class="painel">
+        <ul id="lista-pedido" class="lista-pedido"></ul>
+        <div id="mensagem-vazia" class="vazio">Seu pedido ainda está vazio.</div>
+        <div id="total-pedido" class="total">Total: R$ 0,00</div>
+        <div class="acoes">
+          <button id="remover" class="botao secundario">Remover último item</button>
+          <button id="limpar" class="botao perigo">Limpar pedido</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pagamento" class="aba">
+      <h2>Finalizar compra</h2>
+      <p class="descricao">Confira o total e escolha como deseja pagar.</p>
+      <div class="painel">
+        <strong class="descricao">TOTAL A PAGAR</strong>
+        <div id="total-pagamento" class="total-pagamento">R$ 0,00</div>
+        <h3>Forma de pagamento</h3>
+        <label class="pagamento-opcao"><input type="radio" name="pagamento" value="Pix"> Pix — Pagamento instantâneo</label>
+        <label class="pagamento-opcao"><input type="radio" name="pagamento" value="Cartão de crédito"> Cartão de crédito — Crédito</label>
+        <label class="pagamento-opcao"><input type="radio" name="pagamento" value="Cartão de débito"> Cartão de débito — Débito</label>
+        <label class="pagamento-opcao"><input type="radio" name="pagamento" value="Dinheiro"> Dinheiro — Pagamento em dinheiro</label>
+        <button id="confirmar" class="botao">✓ Confirmar pedido</button>
+        <p class="aviso">Pagamento demonstrativo — nenhuma cobrança real será feita.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  let produtos = [];
+
+  let pedido = [];
+  let pedidoConfirmado = false;
+  const dinheiro = valor => valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  function totalPedido() {
+    return pedido.reduce((soma, produto) => soma + produto.preco, 0);
+  }
+
+  function trocarAba(nome) {
+    document.querySelectorAll(".aba").forEach(aba => aba.classList.toggle("ativa", aba.id === nome));
+    document.querySelectorAll("nav button[data-aba]").forEach(botao => botao.classList.toggle("ativo", botao.dataset.aba === nome));
+  }
+
+  document.querySelectorAll("nav button[data-aba]").forEach(botao => {
+    botao.addEventListener("click", () => trocarAba(botao.dataset.aba));
+  });
+
+  function mostrarSubaba(nome) {
+    document.querySelectorAll(".subaba").forEach(secao => secao.classList.toggle("ativa", secao.id === nome));
+    document.getElementById("menu-links").hidden = true;
+    document.getElementById("menu-toggle").setAttribute("aria-expanded", "false");
+  }
+
+  document.getElementById("menu-toggle").addEventListener("click", () => {
+    const links = document.getElementById("menu-links");
+    links.hidden = !links.hidden;
+    document.getElementById("menu-toggle").setAttribute("aria-expanded", String(!links.hidden));
+  });
+  document.querySelectorAll(".menu-links button").forEach(botao => {
+    botao.addEventListener("click", () => {
+      trocarAba("menu");
+      mostrarSubaba(botao.dataset.subaba);
+    });
+  });
+
+  let categoriaAtual = "hamburguer";
+  document.querySelectorAll(".categorias button").forEach(botao => {
+    botao.addEventListener("click", () => {
+      categoriaAtual = botao.dataset.categoria;
+      document.querySelectorAll(".categorias button").forEach(item => item.classList.toggle("ativo", item === botao));
+      desenharCardapio();
+    });
+  });
+  function desenharCardapio() {
+    const grade = document.getElementById("grade-produtos");
+    grade.innerHTML = "";
+    produtos.filter(produto => produto.categoria === categoriaAtual).forEach(produto => {
+      const cartao = document.createElement("article");
+      cartao.className = "cartao";
+      const imagem = document.createElement("img");
+      imagem.className = "imagem-produto";
+      imagem.src = "imagens/lanche-" + String(produto.imagem).padStart(2, "0") + ".jpg";
+      imagem.alt = produto.nome;
+      imagem.loading = "lazy";
+      const nome = document.createElement("h3");
+      nome.textContent = String(produto.id).padStart(2, "0") + " | " + produto.nome;
+      const descricao = document.createElement("p");
+      descricao.className = "descricao-produto";
+      descricao.textContent = produto.descricao;
+      const preco = document.createElement("div");
+      preco.className = "preco";
+      preco.textContent = dinheiro(produto.preco);
+      const botao = document.createElement("button");
+      botao.className = "botao";
+      botao.textContent = "+ Adicionar";
+      botao.addEventListener("click", () => adicionar(produto.id, cartao));
+      cartao.append(imagem, nome, descricao, preco, botao);
+      grade.appendChild(cartao);
+    });
+  }
+
+  function animarLancheAteCarrinho(cartao) {
+    const destino = document.querySelector('nav button[data-aba="pedido"]');
+    if (!cartao || !destino || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const origem = cartao.getBoundingClientRect();
+    const alvo = destino.getBoundingClientRect();
+    const fantasma = cartao.cloneNode(true);
+    fantasma.classList.add("lanche-voando");
+    fantasma.style.left = origem.left + "px";
+    fantasma.style.top = origem.top + "px";
+    fantasma.style.width = origem.width + "px";
+    fantasma.style.height = origem.height + "px";
+    fantasma.style.setProperty("--voo-x", (alvo.left + alvo.width / 2 - (origem.left + origem.width / 2)) + "px");
+    fantasma.style.setProperty("--voo-y", (alvo.top + alvo.height / 2 - (origem.top + origem.height / 2)) + "px");
+    document.body.appendChild(fantasma);
+
+    requestAnimationFrame(() => fantasma.classList.add("lanche-voando-ativo"));
+    fantasma.addEventListener("transitionend", () => fantasma.remove(), { once: true });
+    setTimeout(() => fantasma.remove(), 900);
+
+    destino.classList.remove("carrinho-pulsando");
+    void destino.offsetWidth;
+    destino.classList.add("carrinho-pulsando");
+    setTimeout(() => destino.classList.remove("carrinho-pulsando"), 650);
+  }
+
+  function adicionar(id, cartao) {
+    if (pedidoConfirmado) {
+      alert("Este pedido já foi confirmado.");
+      return;
+    }
+    animarLancheAteCarrinho(cartao);
+    const produto = produtos.find(item => item.id === id);
+    pedido.push(produto);
+    atualizarTelas();
+  }
+
+  function removerItem() {
+    if (pedidoConfirmado || pedido.length === 0) {
+      if (pedido.length === 0) alert("Seu pedido está vazio.");
+      return;
+    }
+    pedido.pop();
+    atualizarTelas();
+  }
+
+  function limparPedido() {
+    if (pedidoConfirmado) return;
+    if (pedido.length === 0) {
+      alert("O pedido já está vazio.");
+      return;
+    }
+    if (confirm("Deseja remover todos os itens do pedido?")) {
+      pedido = [];
+      atualizarTelas();
+    }
+  }
+
+  function atualizarTelas() {
+    const lista = document.getElementById("lista-pedido");
+    lista.innerHTML = "";
+    pedido.forEach((produto, indice) => {
+      const item = document.createElement("li");
+      const texto = document.createElement("span");
+      texto.textContent = produto.nome + " — " + dinheiro(produto.preco);
+      const remover = document.createElement("button");
+      remover.className = "botao perigo";
+      remover.textContent = "Remover";
+      remover.disabled = pedidoConfirmado;
+      remover.addEventListener("click", () => {
+        if (!pedidoConfirmado) {
+          pedido.splice(indice, 1);
+          atualizarTelas();
+        }
+      });
+      item.append(texto, remover);
+      lista.appendChild(item);
+    });
+
+    document.getElementById("mensagem-vazia").style.display = pedido.length ? "none" : "block";
+    document.getElementById("quantidade").textContent = pedido.length;
+    document.getElementById("total-pedido").textContent = "Total: " + dinheiro(totalPedido());
+    document.getElementById("total-pagamento").textContent = dinheiro(totalPedido());
+    document.getElementById("remover").disabled = pedidoConfirmado || pedido.length === 0;
+    document.getElementById("limpar").disabled = pedidoConfirmado || pedido.length === 0;
+    document.getElementById("confirmar").disabled = pedidoConfirmado;
+    document.querySelectorAll('input[name="pagamento"]').forEach(input => input.disabled = pedidoConfirmado);
+  }
+
+  document.getElementById("remover").addEventListener("click", removerItem);
+  document.getElementById("limpar").addEventListener("click", limparPedido);
+
+  document.getElementById("confirmar").addEventListener("click", async () => {
+    if (pedidoConfirmado) return;
+    if (pedido.length === 0) {
+      alert("Adicione produtos antes de continuar.");
+      return;
+    }
+    const selecionado = document.querySelector('input[name="pagamento"]:checked');
+    if (!selecionado) {
+      alert("Selecione uma forma de pagamento demonstrativa.");
+      return;
+    }
+    const botao = document.getElementById("confirmar");
+    botao.disabled = true;
+    botao.textContent = "Enviando pedido...";
+    try {
+      const resposta = await fetch("/api/pedidos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itens: pedido.map(produto => produto.id) })
+      });
+      const resultado = await resposta.json();
+      if (!resposta.ok) throw new Error(resultado.erro || "A API recusou o pedido.");
+      pedidoConfirmado = true;
+      atualizarTelas();
+      alert("Pedido de demonstração recebido!\n\nCódigo: " + resultado.id + "\nTotal calculado pela API: " + dinheiro(resultado.total) + "\n\nNenhum pagamento foi realizado.");
+    } catch (erro) {
+      botao.disabled = false;
+      botao.textContent = "✓ Confirmar pedido";
+      alert("Não foi possível enviar o pedido. Verifique se o servidor está ligado.\n\n" + erro.message);
+    }
+  });
+
+  function configurarPerfil() {
+    const nome = document.getElementById("perfil-nome");
+    const email = document.getElementById("perfil-email");
+    const status = document.getElementById("perfil-status");
+    try {
+      const perfil = JSON.parse(localStorage.getItem("megaPerfil") || "{}");
+      nome.value = perfil.nome || "";
+      email.value = perfil.email || "";
+    } catch {}
+    document.getElementById("salvar-perfil").addEventListener("click", () => {
+      const perfil = { nome: nome.value.trim(), email: email.value.trim() };
+      localStorage.setItem("megaPerfil", JSON.stringify(perfil));
+      status.textContent = perfil.nome ? "Perfil salvo. Boa viagem, " + perfil.nome + "!" : "Perfil salvo neste navegador.";
+    });
+  }
+
+  function configurarPreferencias() {
+    const descricoes = document.getElementById("config-descricoes");
+    const animacoes = document.getElementById("config-animacoes");
+    descricoes.checked = localStorage.getItem("megaDescricoes") === "true";
+    animacoes.checked = localStorage.getItem("megaAnimacoes") === "true";
+    document.body.classList.toggle("descricoes-visiveis", descricoes.checked);
+    document.body.classList.toggle("reduzir-animacoes", animacoes.checked);
+    descricoes.addEventListener("change", () => {
+      localStorage.setItem("megaDescricoes", descricoes.checked);
+      document.body.classList.toggle("descricoes-visiveis", descricoes.checked);
+    });
+    animacoes.addEventListener("change", () => {
+      localStorage.setItem("megaAnimacoes", animacoes.checked);
+      document.body.classList.toggle("reduzir-animacoes", animacoes.checked);
+    });
+  }
+  async function iniciar() {
+    try {
+      const resposta = await fetch("/api/produtos");
+      if (!resposta.ok) throw new Error("A API não conseguiu carregar o cardápio.");
+      produtos = await resposta.json();
+      desenharCardapio();
+      atualizarTelas();
+    } catch (erro) {
+      document.getElementById("grade-produtos").textContent = "Não foi possível conectar à API. Inicie o servidor conforme o LEIA-ME-API.txt.";
+      console.error(erro);
+    }
+  }
+  configurarPerfil();
+  configurarPreferencias();
+  iniciar();
+</script>
+</body>
+</html>
+
+
+
+
+
